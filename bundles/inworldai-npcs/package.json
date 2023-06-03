@@ -1,0 +1,7 @@
+{
+  "private": true,
+  "name": "inworldai-npcs",
+  "dependencies": {
+    "@inworld/nodejs-sdk": "^1.4.0"
+  }
+}
