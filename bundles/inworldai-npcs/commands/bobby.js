@@ -19,14 +19,14 @@ function sendTextToBobby(player, text) {
     key: process.env.INWORLD_KEY,
     secret: process.env.INWORLD_SECRET,
   });
-  
+
   client.setUser({ fullName: player.name });
   client.setConfiguration({
     capabilities: { audio: false, emotions: true },
     disconnectTimeout: 2500,
     autoreconnect: false,
   });
-  
+
   var character = "workspaces/episod-sandbox/characters/bobby";
   var scene = "workspaces/episod-sandbox/scenes/lobby";
   client.setScene(character);
@@ -35,14 +35,19 @@ function sendTextToBobby(player, text) {
     if (message.isText()) {
       text = message.text.text;
       B.sayAt(player, message.text.text, false, true);
-  
     } else if (message.isEmotion()) {
       var emotions = message.emotions;
       var behavior = emotions.behavior.code.toString().toLowerCase();
       if (emotions.strength.isStrong()) {
-        behavior = '<b>' + behavior + '</b>';
+        behavior = "<b>" + behavior + "</b>";
       }
-      var statement = B.line(78, '-', 'blue') + "\n<yellow>Bobby is feeling " + behavior + ".</yellow>\n" + B.line(78, '-', 'blue') + "\n";
+      var statement =
+        B.line(78, "-", "blue") +
+        "\n<yellow>Bobby is feeling " +
+        behavior +
+        ".</yellow>\n" +
+        B.line(78, "-", "blue") +
+        "\n";
       B.at(player, statement, false, true);
     } else if (message.isControl()) {
       if (message.isInteractionEnd()) {
@@ -54,16 +59,15 @@ function sendTextToBobby(player, text) {
   });
 
   client.setOnError((err) => console.error(`Error: ${err.message}`));
-  client.setOnDisconnect(() => console.log('Disconnected'));
+  client.setOnDisconnect(() => console.log("Disconnected"));
 
   var connection = client.build();
   B.sayAt(player, "<blue>Bobby says:</blue> ", false, true);
-  if (text.startsWith( 'stop')) {
+  if (text.includes("/stop")) {
     B.sayAt(player, "Goodbye.\n");
     B.prompt(player);
     connection.close();
-    return false;
+  } else {
+    connection.sendText(text);
   }
-  connection.sendText(text);
-  return true;
 }

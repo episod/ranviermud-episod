@@ -2,50 +2,53 @@
 require("dotenv").config();
 const sdk = require("@inworld/nodejs-sdk");
 const { Broadcast: B } = require("ranvier");
-const say = B.sayAt;
-const line = B.line;
-
-const client = new sdk.InworldClient().setApiKey({
-  key: process.env.INWORLD_KEY,
-  secret: process.env.INWORLD_SECRET,
-});
 
 module.exports = {
-  usage: "consult [query]",
+  usage: "gertrude [statement]",
   command: (state) => (args, player, arg0) => {
     if (!args.length) {
-      return say(player, "Well, say something...", false, true);
+      return say(player, "What do you want to say to Gertrude?", false, true);
     }
     var statement = args;
-    return sendText(player, statement);
+    return sendTextToGertrude(player, statement);
   },
 };
 
-async function sendText(player, text) {
-  // const npc = Array.from(player.room.npcs).find(npc => npc.getMeta('inworldai-gertrude'));
-  // console.log("Have an npc object:");
-  // console.log(npc);
+function sendTextToGertrude(player, text) {
+  var client = new sdk.InworldClient().setApiKey({
+    key: process.env.INWORLD_KEY,
+    secret: process.env.INWORLD_SECRET,
+  });
+
   client.setUser({ fullName: player.name });
   client.setConfiguration({
     capabilities: { audio: false, emotions: true },
-    disconnectTimeout: 30000,
+    autoreconnect: false,
+    disconnectTimeout: 25000,
   });
+
   var character = "workspaces/episod-sandbox/characters/gertrude";
   var scene = "workspaces/episod-sandbox/scenes/lobby";
-  client.setScene(scene);
+  client.setScene(character);
+
   client.setOnMessage(function (message) {
     if (message.isText()) {
       text = message.text.text;
-      say(player, message.text.text, false, true);
+      B.sayAt(player, message.text.text, false, true);
     } else if (message.isEmotion()) {
       var emotions = message.emotions;
       var behavior = emotions.behavior.code.toString().toLowerCase();
-      var statement = "Gertrude is feeling " + behavior + ".";
-      if (emotions.isStrong) {
-        statement = statement + " BIG TIME.";
+      if (emotions.strength.isStrong()) {
+        behavior = "<b>" + behavior + "</b>";
       }
+      var statement =
+        B.line(78, "-", "cyan") +
+        "\n<magenta>Gertrude exhudes " +
+        behavior +
+        ".</magenta>\n" +
+        B.line(78, "-", "cyan") +
+        "\n";
       B.at(player, statement, false, true);
-      line(5, "cyan");
     } else if (message.isControl()) {
       if (message.isInteractionEnd()) {
         B.prompt(player);
@@ -55,8 +58,18 @@ async function sendText(player, text) {
     }
   });
 
-  const connection = client.build();
-  // connection.setCurrentCharacter(character);
-  connection.sendText(text);
-  return true;
+  client.setOnError((err) => console.error(`Error: ${err.message}`));
+  client.setOnDisconnect(() => console.log("Disconnected"));
+
+  var connection = client.build();
+  if (text.includes("/stop")) {
+    B.sayAt(player, "Goodbye.\n");
+    B.prompt(player);
+    connection.close();
+    connection = null;
+    client = null;
+  } else {
+    B.sayAt(player, "<magenta>Gertrude says:</magenta> ", false, true);
+    connection.sendText(text);
+  }
 }

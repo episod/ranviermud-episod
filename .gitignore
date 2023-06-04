@@ -14,6 +14,9 @@ gulpTODO.md
 .ranvierSecret
 log/*.log
 !log/.gitkeep
+*.env
+package.lock
+.vscode
 
 # ignore mkdocs build target
 site/

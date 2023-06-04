@@ -18,7 +18,8 @@
     "player-groups",
     "progressive-respawn",
     "telnet-networking",
-    "websocket-networking"
+    "websocket-networking",
+    "inworldai-npcs"
   ],
   "dataSources": {
     "YamlArea": {
